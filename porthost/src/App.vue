@@ -28,6 +28,8 @@
   </div>
 
   <div class="text" ref="helperText">
+    <h2>Speed up development with easy access to your favorite localhost dev servers and ports.</h2>
+    <br>
     <p>Type in a port number, hit Enter or click the link</p>
     <p>Ports range from 0 to 65,535 (or 2^16 – 1)</p>
     <p>Data persists using your browser's Local Storage</p>
@@ -239,6 +241,7 @@ main {
   flex-grow: 1;
 
   .text {
+    max-width: 80vw;
     margin: 1rem 0;
     > * {
       margin: 0;
