@@ -49,8 +49,7 @@
             {{ port }}
           </a>
           <div class="btn-box">
-            <button @click="savePort(port)" v-if="!state.savedPorts.includes(port)">♥︎</button>
-            <button @click="deletePort(port)">⨯</button>
+            <button class="deletePortFromSaved" @click="deletePort(port)">×</button>
           </div>
         </div>
       </div>
@@ -72,8 +71,8 @@
             {{ port }}
           </a>
           <div class="btn-box">
-            <button @click="savePort(port)">♥︎</button>
-            <button @click="deletePort(port)">⨯</button>
+            <button class="savePort" @click="savePort(port)">♥︎</button>
+            <button class="deletePort" @click="deletePort(port)">×</button>
           </div>
         </div>
       </div>
@@ -276,15 +275,19 @@ main {
 
   background: $almostBlack;
   border-radius: 10px;
-  width: calc(100% - 4px);
+  // width: calc(100% + 4px);
   transition: all .2s ease-in-out;
 
   &:hover {
-    transform: scale(1.05);
+    transform: scale(1.06);
     --show-btn-box: 1;
   }
 
   > .list-item {
+    display: flex;
+    // align-items: stretch;
+    flex-direction: column;
+    
     left: 4px;
     top: -4px;
     position: relative;
@@ -292,11 +295,10 @@ main {
     background-color: whitesmoke;
     border: 2px solid $almostBlack;
     border-radius: 10px;
+    box-sizing: border-box;
+
     width: 10rem;
     height: 8rem;
-    display: flex;
-    align-items: stretch;
-    flex-direction: column;
 
     a {
       flex: 1;
@@ -312,16 +314,40 @@ main {
       position: relative;
       display: flex;
       justify-content: space-between;
+      box-sizing: border-box;
+      height: 32%;
 
       > button {
         font-size: 2rem;
-        width: 200%;
+        // width: 5rem;
+        width: 100%;
         border: none;
         background: transparent;
         cursor: pointer;
+        padding: 0;
+        margin: 0;
+      }
 
+      .savePort {
+        border-bottom-left-radius: 8px;
         &:hover {
-          color: red;
+          color: white;
+          background-color: goldenrod;
+        }
+      }
+      .deletePort {
+        border-bottom-right-radius: 8px;
+        &:hover {
+          color: white;
+          background-color: red;
+        }
+      }
+      .deletePortFromSaved {
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+        &:hover {
+          color: white;
+          background-color: red;
         }
       }
     }
