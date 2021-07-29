@@ -23,15 +23,15 @@
       type="text"
       v-model="state.port"
       @keydown="detectKey($event)"
-      @click="fadeoutText()"
+      @click="hideHelpText()"
     >
   </div>
 
   <div class="text" ref="helperText">
     <p>Type in a port number, hit Enter or click the link</p>
     <p>Ports range from 0 to 65,535 (or 2^16 – 1)</p>
-    <p>You may have to allow popups for this site</p>
     <p>Data persists using your browser's Local Storage</p>
+    <p>You may have to allow popups for this site</p>
   </div>
 
   <h2 v-if="state.savedPorts.length === 0">You have no saved ports</h2>
@@ -138,7 +138,7 @@ export default {
     /** Fades out helper text when the port input element is clicked
      * @function fadeoutText
      */
-    fadeoutText() {
+    hideHelpText() {
       if (this.$refs.helperText.style.display !== "none") {
         this.$refs.helperText.style.display = "none"
       }
@@ -161,13 +161,13 @@ export default {
         if (this.state.recentPorts.length >= 16) {
           this.state.recentPorts.shift()
         }
-        this.$refs.link.click()
       }
     },
     // On enter key press, call openPort
     detectKey({ key }) {
       if (key === 'Enter' && this.state.port.length !== 0) {
         this.openPort()
+        this.$refs.link.click()
       }
     },
     /** Saves port
@@ -198,19 +198,46 @@ export default {
 </script>
 
 <style lang="scss">
+$almostBlack: #2c3e50;
+
+body {
+  margin: 0;
+}
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
+  color: $almostBlack;
+  padding-top: 60px;
 
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  box-sizing: border-box;
+}
+header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+
+  h1 {
+    margin: 1rem;
+  }
+
+  &:before, &:after {
+    content: '';
+    background-color: $almostBlack;
+    height: 0.1rem;
+    width: 8rem;
+  }
+}
 main {
   display: flex;
   flex-direction: column;
   align-items: center;
+  flex-grow: 1;
 
   .text {
     margin: 1rem 0;
@@ -247,7 +274,7 @@ main {
 
   --show-btn-box: 0;
 
-  background: #2c3e50;;
+  background: $almostBlack;
   border-radius: 10px;
   width: calc(100% - 4px);
   transition: all .2s ease-in-out;
@@ -263,7 +290,7 @@ main {
     position: relative;
 
     background-color: whitesmoke;
-    border: 2px solid #2c3e50;;
+    border: 2px solid $almostBlack;
     border-radius: 10px;
     width: 10rem;
     height: 8rem;
@@ -306,6 +333,6 @@ input:invalid {
 }
 
 footer {
-  margin-top: 60px;
+  padding-top: 60px;
 }
 </style>
