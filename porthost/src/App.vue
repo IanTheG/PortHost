@@ -1,6 +1,6 @@
 <template>
 <header>
-  <h1>porthost.dev</h1>
+  <h1>porthost.io</h1>
 </header>
 
 <main>
