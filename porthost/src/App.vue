@@ -6,28 +6,26 @@
 <main>
   <div class="url">
     <label for="port">
-        <a
-          :href="`http://localhost:${state.port}`"
-          ref="link"
-          rel="noreferrer"
-          target="blank"
-          @click="openPort()"
-        >
-          http://localhost:
-        </a>
+      <a
+        :href="`http://localhost:${state.port}`"
+        ref="link"
+        rel="noreferrer"
+        target="blank"
+        @click="openPort()"
+      >
+        http://localhost:
+      </a>
     </label>
     <input
       id="port"
-      pattern="[0-9]+"
       placeholder="port #"
       type="text"
       v-model="state.port"
       @keydown="detectKey($event)"
-      @click="hideHelpText()"
     >
   </div>
 
-  <div class="text" ref="helperText">
+  <div class="text" v-if="state.savedPorts.length === 0 && state.recentPorts.length === 0">
     <h2>Speed up development with easy access to your favorite localhost dev servers and ports.</h2>
     <br>
     <p>Type in a port number, hit Enter or click the link</p>
@@ -39,20 +37,18 @@
   <h2 v-if="state.savedPorts.length === 0">You have no saved ports</h2>
   <h2 v-else>Saved Ports</h2>
   <section class="list">
-    <div v-for="port in state.savedPorts.slice().sort((a, b) => a - b)">
-      <div class="list-item-box">
-        <div class="list-item">
-          <a
-            :href="`http://localhost:${port}`"
-            ref="link_savedPorts"
-            rel="noreferrer"
-            target="blank"
-          >
-            {{ port }}
-          </a>
-          <div class="btn-box">
-            <button class="deletePortFromSaved" @click="deletePort(port)">×</button>
-          </div>
+    <div v-for="port in state.savedPorts.slice().sort((a, b) => a - b)" class="list-item-box">
+      <div class="list-item">
+        <a
+          :href="`http://localhost:${port}`"
+          ref="link_savedPorts"
+          rel="noreferrer"
+          target="blank"
+        >
+          {{ port }}
+        </a>
+        <div class="btn-box">
+          <button class="deletePortFromSaved" @click="deletePort(port)">×</button>
         </div>
       </div>
     </div>
@@ -61,21 +57,19 @@
   <h2 v-if="state.recentPorts.length === 0">You have no recent ports</h2>
   <h2 v-else>Recent Ports</h2>
   <section class="list">
-    <div v-for="port in state.recentPorts.slice().sort((a, b) => a - b)">
-      <div class="list-item-box">
-        <div class="list-item">
-          <a
-            :href="`http://localhost:${port}`"
-            ref="link_recentPorts"
-            rel="noreferrer"
-            target="blank"
-          >
-            {{ port }}
-          </a>
-          <div class="btn-box">
-            <button class="savePort" @click="savePort(port)">♥︎</button>
-            <button class="deletePort" @click="deletePort(port)">×</button>
-          </div>
+    <div v-for="port in state.recentPorts.slice().sort((a, b) => a - b)" class="list-item-box">
+      <div class="list-item">
+        <a
+          :href="`http://localhost:${port}`"
+          ref="link_recentPorts"
+          rel="noreferrer"
+          target="blank"
+        >
+          {{ port }}
+        </a>
+        <div class="btn-box">
+          <button class="savePort" @click="savePort(port)">♥︎</button>
+          <button class="deletePort" @click="deletePort(port)">×</button>
         </div>
       </div>
     </div>
@@ -94,7 +88,6 @@ import { reactive, watch, onUpdated } from 'vue'
 
 export default {
   setup() {
-
     /** Defines state
      * @param {string} port - The default port
      * @param {string[]} ports - A list of ports pulled from localStorage
@@ -136,14 +129,6 @@ export default {
     }
   },
   methods: {
-    /** Fades out helper text when the port input element is clicked
-     * @function fadeoutText
-     */
-    hideHelpText() {
-      if (this.$refs.helperText.style.display !== "none") {
-        this.$refs.helperText.style.display = "none"
-      }
-    },
     /** Opens port
      * @function openPort
      * Remove port from recent ports list if exists, 
@@ -162,6 +147,7 @@ export default {
         if (this.state.recentPorts.length >= 16) {
           this.state.recentPorts.shift()
         }
+        this.state.port = ""
       }
     },
     // On enter key press, call openPort
@@ -278,7 +264,6 @@ main {
 
   background: $almostBlack;
   border-radius: 10px;
-  // width: calc(100% + 4px);
   transition: all .2s ease-in-out;
 
   &:hover {
@@ -288,7 +273,6 @@ main {
 
   > .list-item {
     display: flex;
-    // align-items: stretch;
     flex-direction: column;
     
     left: 4px;
@@ -355,10 +339,6 @@ main {
       }
     }
   }
-}
-
-input:invalid {
-  border: 3px solid red;
 }
 
 footer {
