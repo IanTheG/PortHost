@@ -1,86 +1,89 @@
 <template>
-<header>
-  <h1>porthost.io</h1>
-</header>
+  <header>
+    <h1>porthost.io</h1>
+  </header>
 
-<main>
-  <div class="url">
-    <label for="port">
-      <a
-        :href="`http://localhost:${state.port}`"
-        ref="link"
-        rel="noreferrer"
-        target="blank"
-        @click="openPort()"
-      >
-        http://localhost:
-      </a>
-    </label>
-    <input
-      id="port"
-      placeholder="port #"
-      type="text"
-      v-model="state.port"
-      @keydown="detectKey($event)"
-    >
-  </div>
-
-  <div class="text" v-if="state.savedPorts.length === 0 && state.recentPorts.length === 0">
-    <h2>Speed up development with easy access to your favorite localhost dev servers and ports.</h2>
-    <br>
-    <p>Type in a port number, hit Enter or click the link</p>
-    <p>Ports range from 0 to 65,535 (or 2^16 – 1)</p>
-    <p>Data persists using your browser's Local Storage</p>
-    <p>You may have to allow popups for this site</p>
-  </div>
-
-  <h2 v-if="state.savedPorts.length === 0">You have no saved ports</h2>
-  <h2 v-else>Saved Ports</h2>
-  <section class="list">
-    <div v-for="port in state.savedPorts.slice().sort((a, b) => a - b)" class="list-item-box">
-      <div class="list-item">
+  <main>
+    <section class="links">
+      <label for="port">
         <a
-          :href="`http://localhost:${port}`"
-          ref="link_savedPorts"
+          :href="`http://localhost:${state.port}`"
+          ref="port"
           rel="noreferrer"
-          target="blank"
+          target="_blank"
+          @click="openHost('port')"
         >
-          {{ port }}
+          http://localhost:
         </a>
-        <div class="btn-box">
-          <button class="deletePortFromSaved" @click="deletePort(port)">×</button>
+      </label>
+      <input id="port" placeholder="port#" type="text" v-model="state.port" @keydown="detectKey($event, 'port')" />
+      <label for="address">
+        <a
+          :href="`http://192.168.${state.address}`"
+          ref="address"
+          rel="noreferrer"
+          target="_blank"
+          @click="openHost('address')"
+          >http://192.168.
+        </a>
+      </label>
+      <input
+        id="address"
+        placeholder="#.#:port#"
+        type="text"
+        v-model="state.address"
+        @keydown="detectKey($event, 'address')"
+      />
+    </section>
+
+    <section class="text" v-if="state.saved.length === 0 && state.recent.length === 0">
+      <h2>Speed up development with easy access to your favorite dev servers on localhost ports and IPv4 addresses.</h2>
+      <br />
+      <p>Type in a port number or IPV4 address, hit Enter or click the link</p>
+      <p>Localhost ports range from 0 to 65,535 (or 2^16 – 1)</p>
+      <p>Data persists using your browser's Local Storage</p>
+      <p>You may have to allow popups for this site</p>
+    </section>
+
+    <h2 v-if="state.saved.length === 0">You have no saved ports or addresses</h2>
+    <h2 v-else>Saved</h2>
+    <section class="list">
+      <div v-for="item in state.saved.slice().sort((a, b) => a - b)" class="list-item-box">
+        <div class="list-item">
+          <a :href="determineHref(item)" ref="link_savedPorts" rel="noreferrer" target="_blank">
+            {{ item }}
+          </a>
+          <div class="btn-box">
+            <button class="deletePortFromSaved" @click="deletePort(item)">×</button>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <h2 v-if="state.recentPorts.length === 0">You have no recent ports</h2>
-  <h2 v-else>Recent Ports</h2>
-  <section class="list">
-    <div v-for="port in state.recentPorts.slice().sort((a, b) => a - b)" class="list-item-box">
-      <div class="list-item">
-        <a
-          :href="`http://localhost:${port}`"
-          ref="link_recentPorts"
-          rel="noreferrer"
-          target="blank"
-        >
-          {{ port }}
-        </a>
-        <div class="btn-box">
-          <button class="savePort" @click="savePort(port)">♥︎</button>
-          <button class="deletePort" @click="deletePort(port)">×</button>
+    <h2 v-if="state.recent.length === 0">You have no recent ports or addresses</h2>
+    <h2 v-else>Recent</h2>
+    <section class="list">
+      <div v-for="item in state.recent.slice().sort((a, b) => a - b)" class="list-item-box">
+        <div class="list-item">
+          <a :href="determineHref(item)" ref="link_recentPorts" rel="noreferrer" target="_blank">
+            {{ item }}
+          </a>
+          <div class="btn-box">
+            <button class="savePort" @click="savePort(item)">♥︎</button>
+            <button class="deletePort" @click="deletePort(item)">×</button>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
-</main>
+    </section>
+  </main>
 
-<footer>
-  <p>Copyright 2021 Ian Goodwin</p>
-  <p>Built using Vue 3</p>
-</footer>
-
+  <footer>
+    <p>
+      Copyright &copy; 2021
+      <a href="https://www.linkedin.com/in/ian-goodwin-6489341b8/" rel="noreferrer" target="_blank"> Ian Goodwin </a>
+    </p>
+    <p>Built using Vue 3</p>
+  </footer>
 </template>
 
 <script>
@@ -90,94 +93,133 @@ export default {
   setup() {
     /** Defines state
      * @param {string} port - The default port
-     * @param {string[]} ports - A list of ports pulled from localStorage
+     * @param {string} address - The default address
+     * @param {string[]} recent - A list of recent ports and addresses pulled from localStorage
+     * @param {string[]} saved - A list of saved ports and addresses pulled from localStorage
      */
     const state = reactive({
-      port: "",
-      recentPorts: [],
-      savedPorts: [],
+      port: '',
+      address: '',
+      recent: [],
+      saved: [],
     })
-    const portsInStorage = localStorage.getItem('porthostdev-userports')
+    const portsInStorage = localStorage.getItem('porthost-data')
     if (portsInStorage) {
       const portsObject = JSON.parse(portsInStorage)
-      state.recentPorts = portsObject.recentPorts || []
-      state.savedPorts = portsObject.savedPorts || []
-      state.port = portsObject.savedPorts[portsObject.savedPorts.length - 1] || ""
+      state.recent = portsObject.recent || []
+      state.saved = portsObject.saved || []
     }
 
-    /** Watches state.port changes
-     * @function watch - Formats port in input element 
+    /** Watches state.port and state.address changes
+     * @function watch - Formats port (0 to 65535) or address (000.000 to 255.255) in input element
      */
-    watch(() => state.port, (port, prevPort) => {
-      if (!port.match(/^\d+$/)) {
-        state.port = prevPort
+    watch(
+      () => state.port,
+      (port, prevPort) => {
+        if (!port.match(/^\d+$/)) {
+          state.port = prevPort
+        }
+        if (port.length === 0) {
+          state.port = ''
+        }
+        if (Number(port) > 65535) {
+          state.port = '65535'
+        }
       }
-      if (port.length === 0) {
-        state.port = ""
+    )
+    watch(
+      () => state.address,
+      (address, prevAddress) => {
+        if (address.match(/^\d{1,}$/)) {
+          if (Number(address) > 255) state.address = prevAddress
+          if (Number(address) === 0) state.address = '0'
+        } else if (address.match(/^\d{1,3}\.\d{0,3}$/)) {
+          const secondNum = address.split('.')
+          if (Number(secondNum[1]) > 255) state.address = prevAddress
+        } else if (address.match(/^\d{1,3}\.\d{1,3}:\d{0,5}$/)) {
+          const thirdNum = address.split(':')
+          if (Number(thirdNum[1]) > 65535) state.address = prevAddress
+        } else {
+          state.address = prevAddress
+        }
+        if (address.length === 0) {
+          state.address = ''
+        }
       }
-      if (Number(port) > 65535) {
-        state.port = "65535"
-      }
-    })
+    )
 
     onUpdated(() => {
-      localStorage.setItem('porthostdev-userports', JSON.stringify(state))
+      localStorage.setItem('porthost-data', JSON.stringify(state))
     })
 
     return {
-      state
+      state,
     }
   },
   methods: {
     /** Opens port
      * @function openPort
-     * Remove port from recent ports list if exists, 
-     * Append port to end of list if not in saved ports list, 
-     * Remove port at start of list if list.length >= 16, 
+     * @param {string} type Either 'port' or 'address'
+     *
+     * Remove port from recent ports list if exists,
+     * Append port to end of list if not in saved ports list,
+     * Remove port at start of list if list.length >= 16,
      * "Click" <a> tag to open in new tab.
      */
-    openPort() {
-      if (this.state.port.length !== 0) {
-        if (this.state.recentPorts.includes(this.state.port)) {
-          this.state.recentPorts = [...this.state.recentPorts.filter((port) => port !== this.state.port)]
+    openHost(type) {
+      if (this.state[type].length !== 0) {
+        if (this.state.recent.includes(this.state[type])) {
+          this.state.recent = [...this.state.recent.filter((item) => item !== this.state[type])]
         }
-        if (!this.state.savedPorts.includes(this.state.port)) {
-          this.state.recentPorts.push(this.state.port)
+        if (!this.state.saved.includes(this.state[type])) {
+          this.state.recent.push(this.state[type])
         }
-        if (this.state.recentPorts.length >= 16) {
-          this.state.recentPorts.shift()
+        if (this.state.recent.length >= 16) {
+          this.state.recent.shift()
         }
-        this.state.port = ""
+        this.state[type] = ''
       }
     },
     // On enter key press, call openPort
-    detectKey({ key }) {
-      if (key === 'Enter' && this.state.port.length !== 0) {
-        this.openPort()
-        this.$refs.link.click()
+    detectKey({ key }, type) {
+      if (key === 'Enter' && this.state[type].length !== 0) {
+        this.openHost(type)
+        this.$refs[type].click()
+      }
+    },
+    /** Determines href for a tag based on item in storage
+     * @function determineHref
+     * @param {string} item The port or address from state.saved
+     * @returns {string} The resulting href attribute
+     */
+    determineHref(item) {
+      if (item.includes('.')) {
+        return `http://192.168.${item}`
+      } else {
+        return `http://localhost:${item}`
       }
     },
     /** Saves port
      * @function savePort
-     * @param {string} selectedPort - The port the user just clicked
-     * Adds port to savedPorts and removes port from recentPorts in state
+     * @param {string} selectedItem - The port or address the user just clicked
+     * Adds port or address to saved and removes it from recent in state
      */
-    savePort(selectedPort) {
-      if (!this.state.savedPorts.includes(selectedPort)) {
-        this.state.savedPorts.push(selectedPort)
-        this.state.recentPorts = this.state.recentPorts.filter((port) => port !== selectedPort)
+    savePort(selectedItem) {
+      if (!this.state.saved.includes(selectedItem)) {
+        this.state.saved.push(selectedItem)
+        this.state.recent = this.state.recent.filter((item) => item !== selectedItem)
       }
     },
     /** Deletes port
      * @function deletePort
-     * @param {string} selectedPort - The port the user just clicked
-     * Deletes port from recentPorts and savedPorts in state
+     * @param {string} selectedItem - The port or address the user just clicked
+     * Deletes port or address from recent and saved in state
      */
-    deletePort(selectedPort) {
-      this.state.recentPorts = this.state.recentPorts.filter((port) => port !== selectedPort)
-      this.state.savedPorts = this.state.savedPorts.filter((port) => port !== selectedPort)
-    }
-  }
+    deletePort(selectedItem) {
+      this.state.recent = this.state.recent.filter((item) => item !== selectedItem)
+      this.state.saved = this.state.saved.filter((item) => item !== selectedItem)
+    },
+  },
 }
 
 // This starter template is using Vue 3 experimental <script setup> SFCs
@@ -187,7 +229,11 @@ export default {
 <style lang="scss">
 $almostBlack: #2c3e50;
 
+html {
+  height: 100%;
+}
 body {
+  height: 100%;
   margin: 0;
 }
 #app {
@@ -200,7 +246,7 @@ body {
 
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   box-sizing: border-box;
 }
 header {
@@ -213,7 +259,8 @@ header {
     margin: 1rem;
   }
 
-  &:before, &:after {
+  &:before,
+  &:after {
     content: '';
     background-color: $almostBlack;
     height: 0.1rem;
@@ -226,25 +273,28 @@ main {
   align-items: center;
   flex-grow: 1;
 
+  .links {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: 1fr auto;
+
+    label {
+      position: relative;
+      top: 0.25rem;
+      font-size: 2rem;
+    }
+    input {
+      max-width: 15rem;
+      font-size: 2rem;
+    }
+  }
+
   .text {
     max-width: 80vw;
     margin: 1rem 0;
     > * {
       margin: 0;
     }
-  }
-}
-
-.url {
-  display: flex;
-  flex-direction: row;
-
-  label {
-    font-size: 2rem;
-  }
-  input {
-    max-width: 8rem;
-    font-size: 2rem;
   }
 }
 
@@ -259,12 +309,11 @@ main {
 }
 
 .list-item-box {
-
   --show-btn-box: 0;
 
   background: $almostBlack;
   border-radius: 10px;
-  transition: all .2s ease-in-out;
+  transition: all 0.2s ease-in-out;
 
   &:hover {
     transform: scale(1.06);
@@ -274,7 +323,7 @@ main {
   > .list-item {
     display: flex;
     flex-direction: column;
-    
+
     left: 4px;
     top: -4px;
     position: relative;
@@ -284,19 +333,20 @@ main {
     border-radius: 10px;
     box-sizing: border-box;
 
-    width: 10rem;
+    min-width: 8rem;
     height: 8rem;
 
     a {
       flex: 1;
       font-size: 2rem;
+      padding: 1rem;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
     .btn-box {
-      transition: all .2s ease-in-out;
+      transition: all 0.2s ease-in-out;
       opacity: var(--show-btn-box);
       position: relative;
       display: flex;
@@ -306,7 +356,6 @@ main {
 
       > button {
         font-size: 2rem;
-        // width: 5rem;
         width: 100%;
         border: none;
         background: transparent;
