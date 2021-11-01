@@ -7,7 +7,7 @@
     <p>{{ state.theme }}</p>
   </div> -->
 
-  <div class="switch">
+  <div class="theme-switch">
     <button :class="state.theme ? '' : 'active'" @click="toggleTheme(false)">
       <span>
         <svg focusable="false" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
@@ -31,36 +31,54 @@
   </div>
 
   <main>
+    <section class="link-switch">
+      <div class="link-switch-container" style="justify-content: right">
+        <h3 class="link-type" @click="state.linkType = false">Localhost</h3>
+      </div>
+      <label class="switch" style="margin: 1rem">
+        <input type="checkbox" ref="link_type" :checked="state.linkType" @click="state.linkType = !state.linkType" />
+        <div>
+          <span></span>
+        </div>
+      </label>
+      <div class="link-switch-container" style="justify-content: left">
+        <h3 class="link-type" @click="state.linkType = true">IPV4 address</h3>
+      </div>
+    </section>
     <section class="links">
-      <label for="port">
-        <a
-          :href="`http://localhost:${state.port}`"
-          ref="port"
-          rel="noreferrer"
-          target="_blank"
-          @click="openHost('port')"
-        >
-          http://localhost:
-        </a>
-      </label>
-      <input id="port" placeholder="port#" type="text" v-model="state.port" @keydown="detectKey($event, 'port')" />
-      <label for="address">
-        <a
-          :href="`http://192.168.${state.address}`"
-          ref="address"
-          rel="noreferrer"
-          target="_blank"
-          @click="openHost('address')"
-          >http://192.168.
-        </a>
-      </label>
-      <input
-        id="address"
-        placeholder="#.#:port#"
-        type="text"
-        v-model="state.address"
-        @keydown="detectKey($event, 'address')"
-      />
+      <div :style="state.linkType ? 'display: none' : 'display: flex'">
+        <label for="port">
+          <a
+            :href="`http://localhost:${state.port}`"
+            ref="port"
+            rel="noreferrer"
+            target="_blank"
+            @click="openHost('port')"
+          >
+            http://localhost:
+          </a>
+        </label>
+        <input id="port" placeholder="port#" type="text" v-model="state.port" @keydown="detectKey($event, 'port')" />
+      </div>
+      <div :style="state.linkType ? 'display: flex' : 'display: none'">
+        <label for="address">
+          <a
+            :href="`http://${state.address}`"
+            ref="address"
+            rel="noreferrer"
+            target="_blank"
+            @click="openHost('address')"
+            >http://
+          </a>
+        </label>
+        <input
+          id="address"
+          placeholder="#.#.#.#:port#"
+          type="text"
+          v-model="state.address"
+          @keydown="detectKey($event, 'address')"
+        />
+      </div>
     </section>
 
     <section class="text" v-if="state.saved.length === 0 && state.recent.length === 0">
@@ -114,11 +132,14 @@
 </template>
 
 <script>
-import { reactive, watch, onUpdated } from 'vue'
+import { reactive, watch, onMounted, onUpdated, toRaw } from 'vue'
+import LocalForage from 'localforage'
 
 export default {
   setup() {
     /** Defines state
+     * @param {string} theme - The theme, either light or dark
+     * @param {string} address - Determines the rendered label and input, for either localhost or ipv4 addresses
      * @param {string} port - The default port
      * @param {string} address - The default address
      * @param {string[]} recent - A list of recent ports and addresses pulled from localStorage
@@ -126,21 +147,22 @@ export default {
      */
     const state = reactive({
       theme: false,
+      linkType: false, // false: localhost, true: ipv4
       port: '',
       address: '',
       recent: [],
       saved: [],
     })
-    const portsInStorage = localStorage.getItem('porthost-data')
-    if (portsInStorage) {
-      const portsObject = JSON.parse(portsInStorage)
-      state.recent = portsObject.recent || []
-      state.saved = portsObject.saved || []
-      state.theme = portsObject.theme || false
+    // const portsInStorage = localStorage.getItem('porthost-data')
+    // if (portsInStorage) {
+    //   const portsObject = JSON.parse(portsInStorage)
+    //   state.recent = portsObject.recent || []
+    //   state.saved = portsObject.saved || []
+    //   state.theme = portsObject.theme || false
 
-      if (state.theme) document.body.classList.add('dark')
-      else document.body.classList.remove('dark')
-    }
+    //   if (state.theme) document.body.classList.add('dark')
+    //   else document.body.classList.remove('dark')
+    // }
 
     /** Watches state.port and state.address changes
      * @function watch - Formats port (0 to 65535) or address (000.000 to 255.255) in input element
@@ -148,14 +170,18 @@ export default {
     watch(
       () => state.port,
       (port, prevPort) => {
-        if (!port.match(/^\d+$/)) {
+        // if (!port.match(/^\d{0,5}/) || port.match(/^\d{0,5}/)[0].length == 0) {
+        if (!port.match(/^\d{0,5}$/)) {
           state.port = prevPort
         }
+        // else if (port.match(/^\d{6,}.*$/) || port.match(/[\s]/)) {
+        //   state.port = prevPort
+        // }
         if (port.length === 0) {
           state.port = ''
         }
         if (Number(port) > 65535) {
-          state.port = '65535'
+          state.port = prevPort
         }
       }
     )
@@ -166,11 +192,19 @@ export default {
           if (Number(address) > 255) state.address = prevAddress
           if (Number(address) === 0) state.address = '0'
         } else if (address.match(/^\d{1,3}\.\d{0,3}$/)) {
-          const secondNum = address.split('.')
-          if (Number(secondNum[1]) > 255) state.address = prevAddress
-        } else if (address.match(/^\d{1,3}\.\d{1,3}:\d{0,5}$/)) {
-          const thirdNum = address.split(':')
-          if (Number(thirdNum[1]) > 65535) state.address = prevAddress
+          const num = address.split('.')
+          if (Number(num[1]) > 255) state.address = prevAddress
+        } else if (address.match(/^\d{1,3}\.\d{1,3}\.\d{0,3}$/)) {
+          const num = address.split('.')
+          if (Number(num[2]) > 255) state.address = prevAddress
+        } else if (address.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{0,3}$/)) {
+          const num = address.split('.')
+          if (Number(num[3]) > 255) state.address = prevAddress
+        } else if (address.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{0,5}$/)) {
+          const num = address.split(':')
+          if (Number(num[1]) > 65535) state.address = prevAddress
+          // } else if (address.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5}\/.*$/) && !address.match(/[\s]/)) {
+          //   // Matches only to avoid else condition
         } else {
           state.address = prevAddress
         }
@@ -180,8 +214,27 @@ export default {
       }
     )
 
+    let portsInStorage
+
+    onMounted(async () => {
+      try {
+        portsInStorage = await LocalForage.getItem('porthost-data')
+        if (portsInStorage) {
+          state.recent = portsInStorage.recent || []
+          state.saved = portsInStorage.saved || []
+          state.theme = portsInStorage.theme || false
+          // state.linkType = portsInStorage.linkType || false
+
+          if (state.theme) document.body.classList.add('dark')
+          else document.body.classList.remove('dark')
+        }
+      } catch (err) {
+        console.err(err)
+      }
+    })
+
     onUpdated(() => {
-      localStorage.setItem('porthost-data', JSON.stringify(state))
+      LocalForage.setItem('porthost-data', toRaw(state))
     })
 
     return {
@@ -238,7 +291,7 @@ export default {
      */
     determineHref(item) {
       if (item.includes('.')) {
-        return `http://192.168.${item}`
+        return `http://${item}`
       } else {
         return `http://localhost:${item}`
       }
@@ -299,6 +352,9 @@ body {
       background-color: $almostBlack;
       color: white;
     }
+    h3.link-type:after {
+      background-color: white !important;
+    }
   }
 }
 #app {
@@ -329,7 +385,7 @@ header {
     width: 20vw;
   }
 }
-.switch {
+.theme-switch {
   position: absolute;
   top: 0;
   right: 0;
@@ -380,17 +436,53 @@ main {
   align-items: center;
   flex-grow: 1;
 
+  .link-switch {
+    display: flex;
+    align-items: center;
+
+    div.link-switch-container {
+      margin: 0rem;
+      width: 8rem;
+      display: flex;
+
+      h3.link-type {
+        display: inline-block;
+        position: relative;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        cursor: pointer;
+
+        &:after {
+          content: '';
+          position: absolute;
+          background-color: $almostBlack;
+          height: 0.1rem;
+          left: 0;
+          bottom: 0;
+          width: 100%;
+          transform: scaleX(0);
+          transition: transform 0.1s linear;
+          transform-origin: bottom center;
+        }
+        &:hover:after {
+          transform: scaleX(1);
+          transform-origin: bottom center;
+        }
+      }
+    }
+  }
+
   .links {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-rows: 1fr auto;
+    display: flex;
+    flex-direction: column;
 
     @media screen and (max-width: 414px) {
-      grid-template-columns: 1fr;
-      grid-template-rows: auto auto auto auto;
-
-      label[for='address'] {
-        padding-top: 1rem;
+      div {
+        display: flex;
+        flex-direction: column;
       }
     }
 
@@ -410,6 +502,84 @@ main {
     margin: 1rem 0;
     > * {
       margin: 0;
+    }
+  }
+}
+
+.switch {
+  --line: #505162;
+  --dot: #747474;
+  --circle: #9ea0be;
+  --duration: 0.3s;
+  --text: #9ea0be;
+  cursor: pointer;
+  input {
+    display: none;
+    & + div {
+      position: relative;
+      &:before,
+      &:after {
+        --s: 1;
+        content: '';
+        position: absolute;
+        height: 4px;
+        top: 10px;
+        width: 24px;
+        background: var(--line);
+        transform: scaleX(var(--s));
+        transition: transform var(--duration) ease;
+      }
+      &:before {
+        --s: 0;
+        left: 0;
+        transform-origin: 0 50%;
+        border-radius: 2px 0 0 2px;
+      }
+      &:after {
+        left: 28px;
+        transform-origin: 100% 50%;
+        border-radius: 0 2px 2px 0;
+      }
+      span {
+        padding-left: 56px;
+        line-height: 24px;
+        color: var(--text);
+        &:before {
+          --x: 0;
+          --b: var(--circle);
+          --s: 4px;
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          box-shadow: inset 0 0 0 var(--s) var(--b);
+          transform: translateX(var(--x));
+          transition: box-shadow var(--duration) ease, transform var(--duration) ease;
+        }
+        &:not(:empty) {
+          padding-left: 64px;
+        }
+      }
+    }
+    &:checked {
+      & + div {
+        &:before {
+          --s: 1;
+        }
+        &:after {
+          --s: 0;
+        }
+        span {
+          &:before {
+            --x: 28px;
+            --s: 12px;
+            --b: var(--dot);
+          }
+        }
+      }
     }
   }
 }
