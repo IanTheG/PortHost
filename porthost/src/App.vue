@@ -224,9 +224,8 @@ export default {
       }
     )
 
-    let portsInStorage
-
     onMounted(async () => {
+      let portsInStorage
       try {
         portsInStorage = await LocalForage.getItem('porthost-data')
         if (portsInStorage) {
@@ -240,6 +239,14 @@ export default {
         }
       } catch (err) {
         console.err(err)
+      }
+
+      // Determines if device is a touchscreen device
+      const isTouchDevice = () => {
+        return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0
+      }
+      if (isTouchDevice()) {
+        document.querySelector('main').classList.add('no-hover')
       }
     })
 
@@ -708,5 +715,18 @@ main {
 
 footer {
   padding-top: 60px;
+}
+
+// No hover for mobile devices
+main.no-hover {
+  .list-item-box {
+    transform: scale(1);
+    --show-btn-box: 1;
+
+    &:hover {
+      transform: scale(1);
+      --show-btn-box: 1;
+    }
+  }
 }
 </style>
