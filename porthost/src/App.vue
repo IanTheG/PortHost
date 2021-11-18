@@ -348,32 +348,6 @@ $almostBlack: #2c3e50;
 html {
   height: 100%;
 }
-body {
-  height: 100%;
-  margin: 0;
-  background: white;
-  color: $almostBlack;
-
-  &.dark {
-    background: black;
-    color: whitesmoke;
-
-    header:before,
-    header:after {
-      background-color: white;
-    }
-    a {
-      color: white;
-    }
-    input {
-      background-color: $almostBlack;
-      color: white;
-    }
-    h3.link-type:after {
-      background-color: white !important;
-    }
-  }
-}
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -438,6 +412,7 @@ header {
       font-size: 14px;
       cursor: pointer;
       background-color: whitesmoke;
+      color: $almostBlack;
 
       &:first-child {
         border-top-right-radius: 0;
@@ -524,6 +499,8 @@ main {
     input {
       max-width: 15rem;
       font-size: 2rem;
+      border: 2px solid rgb(238, 238, 238);
+      margin-left: 4px;
     }
   }
 
@@ -685,6 +662,7 @@ main {
         cursor: pointer;
         padding: 0;
         margin: 0;
+        color: $almostBlack;
       }
 
       .savePort {
@@ -726,6 +704,36 @@ main.no-hover {
     &:hover {
       transform: scale(1);
       --show-btn-box: 1;
+    }
+  }
+}
+
+body {
+  // Base styles
+  height: 100%;
+  margin: 0;
+  background: white;
+  color: $almostBlack;
+
+  // Dark mode
+  &.dark {
+    background: black;
+    color: whitesmoke;
+
+    header:before,
+    header:after {
+      background-color: whitesmoke;
+    }
+    a {
+      color: whitesmoke;
+    }
+    input {
+      background-color: $almostBlack;
+      border: 1px solid $almostBlack;
+      color: whitesmoke;
+    }
+    h3.link-type:after {
+      background-color: whitesmoke !important;
     }
   }
 }
