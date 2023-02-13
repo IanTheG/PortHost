@@ -134,7 +134,7 @@
 
   <footer>
     <p>
-      Copyright &copy; 2021
+      Copyright &copy; {{ new Date().getFullYear() }}
       <a href="https://www.linkedin.com/in/ian-goodwin-6489341b8/" rel="noreferrer" target="_blank"> Ian Goodwin </a>
     </p>
     <p>Built using Vue 3</p>
@@ -238,7 +238,7 @@ export default {
           else document.body.classList.remove('dark')
         }
       } catch (err) {
-        console.err(err)
+        console.error(err)
       }
 
       // Determines if device is a touchscreen device
@@ -246,7 +246,7 @@ export default {
         return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0
       }
       if (isTouchDevice()) {
-        document.querySelector('main').classList.add('no-hover')
+        document.querySelector('main')?.classList.add('no-hover')
       }
     })
 
