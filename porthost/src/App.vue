@@ -2,7 +2,7 @@
   <header>
     <h1>porthost.io</h1>
   </header>
-
+  <!-- 
   <div class="theme-switch-container">
     <div class="theme-switch">
       <button :class="state.theme ? '' : 'active'" @click="toggleTheme(false)">
@@ -38,7 +38,8 @@
         </svg>
       </button>
     </div>
-  </div>
+  </div> 
+-->
 
   <main>
     <section class="link-switch">
@@ -714,6 +715,48 @@ body {
   margin: 0;
   background: white;
   color: $almostBlack;
+
+  @media (prefers-color-scheme: dark) {
+    background: black;
+    color: whitesmoke;
+
+    header:before,
+    header:after {
+      background-color: whitesmoke;
+    }
+    a {
+      color: whitesmoke;
+    }
+    input {
+      background-color: $almostBlack;
+      border: 1px solid $almostBlack;
+      color: whitesmoke;
+    }
+    h3.link-type:after {
+      background-color: whitesmoke !important;
+    }
+  }
+
+  @media (prefers-color-scheme: light) {
+    background: white;
+    color: $almostBlack;
+
+    header:before,
+    header:after {
+      background-color: $almostBlack;
+    }
+    a {
+      color: $almostBlack;
+    }
+    input {
+      background-color: whitesmoke;
+      border: 1px solid whitesmoke;
+      color: $almostBlack;
+    }
+    h3.link-type:after {
+      background-color: $almostBlack !important;
+    }
+  }
 
   // Dark mode
   &.dark {
